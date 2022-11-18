@@ -6,8 +6,8 @@ import pandas as pd
 
 # Plotting imports and initialization
 # from ax.utils.notebook.plotting import render, init_notebook_plotting
-# from ax.plot.pareto_utils import compute_posterior_pareto_frontier
-# from ax.plot.pareto_frontier import plot_pareto_frontier
+from ax.plot.pareto_utils import compute_posterior_pareto_frontier
+from ax.plot.pareto_frontier import plot_pareto_frontier
 # init_notebook_plotting()
 
 # Load our sample 2-objective problem
@@ -53,26 +53,37 @@ ax_client.create_experiment(
 )
 
 
-def evaluate(parameters):
-    evaluation = branin_currin(torch.tensor([parameters.get("x1"), parameters.get("x2")]))
+def evaluate(parameters, X, gamma1, gamma2):
+    evaluation = evaluate_tree.evaluate_tree(
+        X, gamma1, gamma2,
+        parameters.get("y1_weight"),
+        parameters.get("y2_weight")
+    )
     # In our case, standard error is 0, since we are computing a synthetic function.
     # Set standard error to None if the noise level is unknown.
-    return {"a": (evaluation[0].item(), 0.0), "b": (evaluation[1].item(), 0.0)}
+    return {"a": (evaluation[0], evaluation[2]), "b": (evaluation[1], evaluation[3])}
+
+
+df = pd.read_csv('train_data.csv')
+r_dataframeX = pandas2ri.py2rpy(df[['hhh_gender', 'hhh_age', 'hhh_literacy',
+       'age', 'gender']])
+r_dataframeG1 = pandas2ri.py2rpy(df[['...1', 'alt']])
+r_dataframeG2 = pandas2ri.py2rpy(df[['ob2', 'alt2']])
+
 
 
 for i in range(10):
     parameters, trial_index = ax_client.get_next_trial()
     # Local evaluation here can be replaced with deployment to external system.
-    ax_client.complete_trial(trial_index=trial_index, raw_data=evaluate(parameters))
+    ax_client.complete_trial(trial_index=trial_index, raw_data=evaluate(parameters, r_dataframeX, r_dataframeG1, r_dataframeG2))
 
+objectives = ax_client.experiment.optimization_config.objective.objectives
+frontier = compute_posterior_pareto_frontier(
+    experiment=ax_client.experiment,
+    data=ax_client.experiment.fetch_data(),
+    primary_objective=objectives[1].metric,
+    secondary_objective=objectives[0].metric,
+    absolute_metrics=["a", "b"],
+    num_points=10,
+)
 
-# objectives = ax_client.experiment.optimization_config.objective.objectives
-# frontier = compute_posterior_pareto_frontier(
-#     experiment=ax_client.experiment,
-#     data=ax_client.experiment.fetch_data(),
-#     primary_objective=objectives[1].metric,
-#     secondary_objective=objectives[0].metric,
-#     absolute_metrics=["a", "b"],
-#     num_points=20,
-# )
-# render(plot_pareto_frontier(frontier, CI_level=0.90))
