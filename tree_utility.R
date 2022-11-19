@@ -13,12 +13,13 @@ evaluate_tree <- function(X, gamma1, gamma2, g1_weight, g2_weight) {
 honest_pt <- function(X, gamma1, gamma2, g1_weight, g2_weight) {
   # Add in mix of gammas for fitting
   gamma = (gamma1 * g1_weight) + (gamma2 * g2_weight)
-  ht = hybrid_policy_tree(X, gamma, depth = 3)
-  ht_pred <- predict(ht, X)
+  dt = sort(sample.int(nrow(X), nrow(X)*.7, replace = FALSE))
+  ht = hybrid_policy_tree(X[dt,], gamma[dt,], depth = 3)
+  ht_pred <- predict(ht, X[-dt,])
 
-  g1_util <- get_utility(ht_pred, gamma1)[["mean_utility"]]
+  g1_util <- get_utility(ht_pred, gamma1[-dt,])[["mean_utility"]]
 
-  g2_util <- get_utility(ht_pred, gamma2)[["mean_utility"]]
+  g2_util <- get_utility(ht_pred, gamma2[-dt,])[["mean_utility"]]
 
   c(g1_util, g2_util)
 }

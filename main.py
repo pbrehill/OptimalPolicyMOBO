@@ -64,15 +64,15 @@ def evaluate(parameters, X, gamma1, gamma2):
     return {"a": (evaluation[0], evaluation[2]), "b": (evaluation[1], evaluation[3])}
 
 
-df = pd.read_csv('train_data.csv')
+df = pd.read_csv('train_data1.csv')
 r_dataframeX = pandas2ri.py2rpy(df[['hhh_gender', 'hhh_age', 'hhh_literacy',
-       'age', 'gender']])
-r_dataframeG1 = pandas2ri.py2rpy(df[['...1', 'alt']])
-r_dataframeG2 = pandas2ri.py2rpy(df[['ob2', 'alt2']])
+       'age', 'female', 'monthly_spending']])
+r_dataframeG1 = pandas2ri.py2rpy(df[['any_drops2-1', 'any_drops3-1', 'any_drops4-1']])
+r_dataframeG2 = pandas2ri.py2rpy(df[['maths2-1', 'maths3-1', 'maths4-1']])
 
 
 
-for i in range(10):
+for i in range(100):
     parameters, trial_index = ax_client.get_next_trial()
     # Local evaluation here can be replaced with deployment to external system.
     ax_client.complete_trial(trial_index=trial_index, raw_data=evaluate(parameters, r_dataframeX, r_dataframeG1, r_dataframeG2))
@@ -84,6 +84,7 @@ frontier = compute_posterior_pareto_frontier(
     primary_objective=objectives[1].metric,
     secondary_objective=objectives[0].metric,
     absolute_metrics=["a", "b"],
-    num_points=10,
+    num_points=100,
 )
 
+plot_pareto_frontier(frontier, CI_level=0.90)
