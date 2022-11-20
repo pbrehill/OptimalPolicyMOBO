@@ -5,10 +5,12 @@ import torch
 import pandas as pd
 
 # Plotting imports and initialization
-# from ax.utils.notebook.plotting import render, init_notebook_plotting
+from ax.utils.notebook.plotting import render, init_notebook_plotting
 from ax.plot.pareto_utils import compute_posterior_pareto_frontier
 from ax.plot.pareto_frontier import plot_pareto_frontier
 # init_notebook_plotting()
+import plotly.offline as py
+from tqdm import tqdm
 
 # Load our sample 2-objective problem
 from botorch.test_functions.multi_objective import BraninCurrin
@@ -72,7 +74,7 @@ r_dataframeG2 = pandas2ri.py2rpy(df[['maths2-1', 'maths3-1', 'maths4-1']])
 
 
 
-for i in range(100):
+for i in tqdm(range(100)):
     parameters, trial_index = ax_client.get_next_trial()
     # Local evaluation here can be replaced with deployment to external system.
     ax_client.complete_trial(trial_index=trial_index, raw_data=evaluate(parameters, r_dataframeX, r_dataframeG1, r_dataframeG2))
@@ -87,4 +89,5 @@ frontier = compute_posterior_pareto_frontier(
     num_points=100,
 )
 
-plot_pareto_frontier(frontier, CI_level=0.90)
+plt_stuff = plot_pareto_frontier(frontier, CI_level=0.90)
+py.plot(plt_stuff.data, filename='simple-line1.html')

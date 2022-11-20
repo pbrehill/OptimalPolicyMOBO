@@ -25,7 +25,7 @@ honest_pt <- function(X, gamma1, gamma2, g1_weight, g2_weight) {
 }
 
   utility_point <- honest_pt(X, gamma1, gamma2, g1_weight, g2_weight)
-  sd <- map(1:50, function (a) {
+  sd <- map(1:200, function (a) {
           dt = sort(sample.int(nrow(X), nrow(X)*.5, replace = TRUE))
           honest_pt(X[dt,], gamma1[dt,], gamma1[dt,], g1_weight, g2_weight)
   }
