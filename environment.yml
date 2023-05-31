@@ -1,0 +1,15 @@
+name: mopol
+channels:
+  - conda-forge
+  - nvidia
+  - pytorch
+dependencies:
+  - pytorch
+  - numpy
+  - plotly
+  - tqdm
+  - rpy2
+  - botorch
+  - pip
+  - pip:
+      - ax-platform
