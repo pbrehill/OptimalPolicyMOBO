@@ -14,9 +14,6 @@ import plotly.offline as py
 from tqdm import tqdm
 
 import random
-import subprocess
-
-subprocess.run(["Rscript", "get_dr_scores.R"])
 
 random.seed(21)
 
@@ -29,6 +26,7 @@ import rpy2.robjects
 from rpy2.robjects import pandas2ri
 pandas2ri.activate()
 import rpy2.robjects as ro
+import optuna
 # ro.r('''source('tree_utility.r')''')
 #
 # evaluate_tree = ro.globalenv['evaluate_tree']
@@ -42,40 +40,9 @@ evaluate_tree = STAP(string, "evaluate_tree")
 honest_pt = STAP(string, "honest_pt")
 
 
-
-ax_client = AxClient()
-ax_client.create_experiment(
-    name="morocco_experiment",
-    parameters=[
-        {
-            "name": f"y{i+1}_weight",
-            "type": "range",
-            "bounds": [0.01, 100.0],
-        }
-        for i in range(1)
-    ],
-    objectives={
-        # `threshold` arguments are optional
-        "a": ObjectiveProperties(minimize=False),
-        "b": ObjectiveProperties(minimize=False)
-    },
-    overwrite_existing_experiment=True,
-    is_test=True,
-)
-
-
 def evaluate(parameters, X, gamma1, gamma2, search_depth):
     evaluation = evaluate_tree.evaluate_tree(
         X, gamma1, gamma2,
-        parameters.get("y1_weight"), search_depth,
-    )
-    # In our case, standard error is 0, since we are computing a synthetic function.
-    # Set standard error to None if the noise level is unknown.
-    return {"a": (evaluation[0], evaluation[2]), "b": (evaluation[1], evaluation[3])}
-
-def evaluate_cost(parameters, X, gamma1, cost, search_depth):
-    evaluation = evaluate_tree.evaluate_tree_cost(
-        X, gamma1, cost *
         parameters.get("y1_weight"), search_depth,
     )
     # In our case, standard error is 0, since we are computing a synthetic function.
@@ -86,11 +53,11 @@ def evaluate_cost(parameters, X, gamma1, cost, search_depth):
 df = pd.read_csv('mopol_data.csv')
 # r_dataframeX = pandas2ri.py2rpy(df[['hhh_gender', 'hhh_age', 'hhh_literacy',
 #        'age', 'female', 'monthly_spending']])
-r_dataframeG1 = pandas2ri.py2rpy(df[['any_drops2-1', 'any_drops3-1', 'any_drops4-1']] * 0.1446128)
+# r_dataframeG1 = pandas2ri.py2rpy(df[['any_drops2-1', 'any_drops3-1', 'any_drops4-1']] * 0.1446128)
+# r_dataframeG2 = pandas2ri.py2rpy(df[['maths2-1', 'maths3-1', 'maths4-1']] * 0.9120552)
+r_dataframeX = pandas2ri.py2rpy(df[["hhh_gender", "hhh_age", "monthly_spending", "hhh_literacy", "age", "gender", "benef", "female", "est_num_kids", "f4", "school_spending" ]])
 r_dataframeG2 = pandas2ri.py2rpy(df[['maths2-1', 'maths3-1', 'maths4-1']] * 0.9120552)
-r_dataframeX = pandas2ri.py2rpy(df[["hhh_gender", "hhh_age", "monthly_spending", "hhh_literacy", "age", "gender", "benef", "female", "est_num_kids", "f4", "school_spending"]])
-r_dataframeG2 = pandas2ri.py2rpy(df[['maths2-1', 'maths3-1', 'maths4-1']] * 0.9120552)
-# r_dataframe_cost = pandas2ri.py2rpy()
+r_dataframe_cost = pandas2ri.py2rpy()
 
 total_time = []
 
@@ -98,6 +65,8 @@ total_time = []
 
 time_loop = []
 start_greedy = time.time()
+study = optuna.create_study(directions=["minimize", "maximize"])
+study.optimize(evaluate, n_trials=30, timeout=300)
 for i in tqdm(range(500)):
     start = time.time()
     parameters, trial_index = ax_client.get_next_trial()

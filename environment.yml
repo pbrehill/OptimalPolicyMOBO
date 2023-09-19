@@ -11,5 +11,8 @@ dependencies:
   - rpy2
   - botorch
   - pip
+  - r-tidyverse
+  - r-rpart
+  - r-policytree
   - pip:
       - ax-platform

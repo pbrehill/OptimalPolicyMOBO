@@ -13,7 +13,7 @@ evaluate_tree <- function(X, gamma1, gamma2, g1_weight, search_depth = 2) {
 
 honest_pt <- function(X, gamma1, gamma2, g1_weight, search_depth) {
   # Add in mix of gammas for fitting
-  gamma = (gamma1 * g1_weight) + ((100.1 - g1_weight) * gamma2)
+  gamma = gamma1 - gamma2 # Benefits - cost
   dt = sort(sample.int(nrow(X), nrow(X)*.5, replace = FALSE))
 
   if (search_depth == 3) {
@@ -38,7 +38,7 @@ honest_pt <- function(X, gamma1, gamma2, g1_weight, search_depth) {
 }
 
   utility_point <- honest_pt(X, gamma1, gamma2, g1_weight, search_depth)
-  sd <- map(1:100, function (a) {
+  sd <- map(1:200, function (a) {
           dt = sort(sample.int(nrow(X), nrow(X)*.5, replace = TRUE))
           honest_pt(X[dt,], gamma1[dt,], gamma1[dt,], g1_weight, search_depth)
   }
@@ -83,13 +83,13 @@ get_oracles <- function(gamma1, gamma2, g1_weight) {
 #   return (0)
 # }
 
-df <- read_csv('train_data1.csv')
-dfX <- df[c('hhh_gender', 'hhh_age', 'hhh_literacy',
-       'age', 'female', 'monthly_spending')]
-
-dfG1 <- df[c('any_drops2-1', 'any_drops3-1', 'any_drops4-1')]  * 0.1446128
-
-dfG2 <- df[c('maths2-1', 'maths3-1', 'maths4-1')] * 0.9120552
+# df <- read_csv('train_data1.csv')
+# dfX <- df[c('hhh_gender', 'hhh_age', 'hhh_literacy',
+#        'age', 'female', 'monthly_spending')]
+#
+# dfG1 <- df[c('any_drops2-1', 'any_drops3-1', 'any_drops4-1')]  * 0.1446128
+#
+# dfG2 <- df[c('maths2-1', 'maths3-1', 'maths4-1')] * 0.9120552
 
 
 # evaluate_tree(dfX, dfG1, dfG2, 99, search_depth = 2)
