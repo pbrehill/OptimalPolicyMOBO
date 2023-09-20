@@ -44,8 +44,8 @@ honest_pt <- function(X, gamma1, gamma2, g1_weight, search_depth) {
   }
   )
 
-  se1 <- sd(map_dbl(sd, ~.x[1])) / sqrt(nrow(X))
-  se2 <- sd(map_dbl(sd, ~.x[2])) / sqrt(nrow(X))
+  se1 <- sd(map_dbl(sd, ~.x[1])) / sqrt(200)
+  se2 <- sd(map_dbl(sd, ~.x[2])) / sqrt(200)
 
   # honest_pt(dfX, dfG1, dfG2, 99.0, 1)
 
