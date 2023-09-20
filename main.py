@@ -18,7 +18,7 @@ import subprocess
 
 subprocess.run(["Rscript", "get_dr_scores.R"])
 
-random.seed(21)
+random.seed(22)
 
 # Load our sample 2-objective problem
 from botorch.test_functions.multi_objective import BraninCurrin
@@ -27,11 +27,16 @@ from botorch.test_functions.multi_objective import BraninCurrin
 from rpy2.robjects.packages import importr
 import rpy2.robjects
 from rpy2.robjects import pandas2ri
+from rpy2.rinterface import RRuntimeWarning
+import warnings
+warnings.filterwarnings("ignore", category=RRuntimeWarning)
 pandas2ri.activate()
 import rpy2.robjects as ro
 # ro.r('''source('tree_utility.r')''')
 #
 # evaluate_tree = ro.globalenv['evaluate_tree']
+
+NUM_TRIALS = 100
 
 from rpy2.robjects.packages import STAP
 #Read the file with the R code snippet
@@ -42,26 +47,27 @@ evaluate_tree = STAP(string, "evaluate_tree")
 honest_pt = STAP(string, "honest_pt")
 
 
-
-ax_client = AxClient()
-ax_client.create_experiment(
-    name="morocco_experiment",
-    parameters=[
-        {
-            "name": f"y{i+1}_weight",
-            "type": "range",
-            "bounds": [0.01, 100.0],
-        }
-        for i in range(1)
-    ],
-    objectives={
-        # `threshold` arguments are optional
-        "a": ObjectiveProperties(minimize=False),
-        "b": ObjectiveProperties(minimize=False)
-    },
-    overwrite_existing_experiment=True,
-    is_test=True,
-)
+def new_experiment():
+    ax_client = AxClient()
+    ax_client.create_experiment(
+        name="morocco_experiment",
+        parameters=[
+            {
+                "name": f"y{i+1}_weight",
+                "type": "range",
+                "bounds": [0.0, 1.0],
+            }
+            for i in range(1)
+        ],
+        objectives={
+            # `threshold` arguments are optional
+            "a": ObjectiveProperties(minimize=False),
+            "b": ObjectiveProperties(minimize=False)
+        },
+        overwrite_existing_experiment=True,
+        is_test=True,
+    )
+    return ax_client
 
 
 def evaluate(parameters, X, gamma1, gamma2, search_depth):
@@ -95,10 +101,10 @@ r_dataframeG2 = pandas2ri.py2rpy(df[['maths2-1', 'maths3-1', 'maths4-1']] * 0.91
 total_time = []
 
 # Greedy
-
 time_loop = []
 start_greedy = time.time()
-for i in tqdm(range(500)):
+ax_client = new_experiment()
+for i in tqdm(range(NUM_TRIALS)):
     start = time.time()
     parameters, trial_index = ax_client.get_next_trial()
     # Local evaluation here can be replaced with deployment to external system.
@@ -113,7 +119,7 @@ frontier = compute_posterior_pareto_frontier(
     primary_objective=objectives[0].metric,
     secondary_objective=objectives[1].metric,
     absolute_metrics=["a", "b"],
-    num_points=500,
+    num_points=NUM_TRIALS,
 )
 
 plt_stuff = plot_pareto_frontier(frontier, CI_level=0.95)
@@ -142,12 +148,12 @@ total_time.append(time.time() - start_greedy)
 # Hybrid
 start_hybrid = time.time()
 time_loop = []
-
-for i in tqdm(range(200)):
+ax_client = new_experiment()
+for i in tqdm(range(NUM_TRIALS)):
     start = time.time()
     parameters, trial_index = ax_client.get_next_trial()
     # Local evaluation here can be replaced with deployment to external system.
-    ax_client.complete_trial(trial_index=trial_index, raw_data=evaluate(parameters, r_dataframeX, r_dataframeG2, 2))
+    ax_client.complete_trial(trial_index=trial_index, raw_data=evaluate(parameters, r_dataframeX, r_dataframeG1, r_dataframeG2, search_depth=2))
     end = time.time()
     time_loop.append(end - start)
 
@@ -158,7 +164,7 @@ frontier = compute_posterior_pareto_frontier(
     primary_objective=objectives[0].metric,
     secondary_objective=objectives[1].metric,
     absolute_metrics=["a", "b"],
-    num_points=200,
+    num_points=NUM_TRIALS,
 )
 
 plt_stuff = plot_pareto_frontier(frontier, CI_level=0.95)

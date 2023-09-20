@@ -20,6 +20,8 @@ dr_scores <- get_scores(cf) %>%
 
 names(dr_scores) <- c("maths2-1", "maths3-1", "maths4-1", "any_drops2-1", "any_drops3-1", "any_drops4-1")
 
-data <- bind_cols(data, dr_scores)
+dr_scores[abs(dr_scores) < 0.01] <- NA
 
-write_csv(data %>% na.omit(), 'mopol_data.csv')
+data <- bind_cols(data, dr_scores) %>% na.omit()
+
+write_csv(data, 'mopol_data.csv')

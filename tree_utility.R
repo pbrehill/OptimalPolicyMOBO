@@ -39,7 +39,7 @@ honest_pt <- function(X, gamma1, gamma2, g1_weight, search_depth) {
 
   utility_point <- honest_pt(X, gamma1, gamma2, g1_weight, search_depth)
   sd <- map(1:200, function (a) {
-          dt = sort(sample.int(nrow(X), nrow(X)*.5, replace = TRUE))
+          dt = sort(sample.int(nrow(X), nrow(X), replace = TRUE))
           honest_pt(X[dt,], gamma1[dt,], gamma1[dt,], g1_weight, search_depth)
   }
   )
@@ -55,7 +55,7 @@ honest_pt <- function(X, gamma1, gamma2, g1_weight, search_depth) {
 
 get_oracles <- function(gamma1, gamma2, g1_weight) {
   # Get the weighted utility matrix
-  gamma <- (gamma1 * g1_weight) + ((100.1 - g1_weight) * gamma2)
+  gamma <- (gamma1 * g1_weight + 0.000000001) + ((1.0 - g1_weight + 0.000000001) * gamma2)
 
   # Find the maximum
   maxes <- max.col(gamma)
