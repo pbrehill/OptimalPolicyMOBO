@@ -1,0 +1,31 @@
+# Use the official Python image as the base image
+FROM python:3.8
+
+# Set the working directory in the container
+WORKDIR /app
+
+# Copy the project files into the container
+COPY . .
+
+# Install Miniconda
+RUN apt-get update && apt-get install -y wget && \
+    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh && \
+    bash miniconda.sh -b -p /opt/conda && \
+    rm miniconda.sh
+
+# Add Conda to the PATH
+ENV PATH /opt/conda/bin:$PATH
+
+# Create and activate a Conda environment
+COPY environment.yml .
+RUN conda env create -f environment.yml
+RUN echo "source activate $(head -1 environment.yml | cut -d' ' -f2)" > ~/.bashrc
+
+# Install any Python dependencies
+RUN pip install -r requirements.txt
+
+# Install R and any R dependencies (adjust as needed)
+RUN apt-get update && apt-get install -y r-base
+
+# Define the command to run your Python script
+CMD ["bash", "-c", "source activate $(head -1 environment.yml | cut -d' ' -f2) && python main.py"]

@@ -38,11 +38,12 @@ honest_pt <- function(X, gamma1, gamma2, g1_weight, search_depth) {
 }
 
   utility_point <- honest_pt(X, gamma1, gamma2, g1_weight, search_depth)
-  sd <- map(1:200, function (a) {
+  sd <- map(1:100, function (a) {
           dt = sort(sample.int(nrow(X), nrow(X), replace = TRUE))
           honest_pt(X[dt,], gamma1[dt,], gamma1[dt,], g1_weight, search_depth)
   }
   )
+
 
   se1 <- sd(map_dbl(sd, ~.x[1])) / sqrt(200)
   se2 <- sd(map_dbl(sd, ~.x[2])) / sqrt(200)

@@ -18,10 +18,13 @@ cf <- multi_arm_causal_forest(
 dr_scores <- get_scores(cf) %>%
   as.data.frame()
 
-names(dr_scores) <- c("maths2-1", "maths3-1", "maths4-1", "any_drops2-1", "any_drops3-1", "any_drops4-1")
+preds <- cf$predictions %>%
+  as.data.frame()
 
-dr_scores[abs(dr_scores) < 0.01] <- NA
+names(dr_scores) <- c("maths2-1", "maths3-1", "maths4-1", "any_drops2-1", "any_drops3-1", "any_drops4-1")
+names(preds) <- c("maths2-1", "maths3-1", "maths4-1", "any_drops2-1", "any_drops3-1", "any_drops4-1")
 
 data <- bind_cols(data, dr_scores) %>% na.omit()
 
 write_csv(data, 'mopol_data.csv')
+write_csv(bind_cols(data, preds) %>% na.omit(), 'mopol_preds.csv')
