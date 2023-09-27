@@ -13,7 +13,7 @@ evaluate_tree <- function(X, gamma1, gamma2, g1_weight, search_depth = 2) {
 
 honest_pt <- function(X, gamma1, gamma2, g1_weight, search_depth) {
   # Add in mix of gammas for fitting
-  gamma = gamma1 - gamma2 # Benefits - cost
+  gamma <- (gamma1 * g1_weight + 0.000000001) + ((1.0 - g1_weight + 0.000000001) * gamma2)
   dt = sort(sample.int(nrow(X), nrow(X)*.5, replace = FALSE))
 
   if (search_depth == 3) {
@@ -38,14 +38,16 @@ honest_pt <- function(X, gamma1, gamma2, g1_weight, search_depth) {
 }
 
   utility_point <- honest_pt(X, gamma1, gamma2, g1_weight, search_depth)
-  sd <- map(1:200, function (a) {
-          dt = sort(sample.int(nrow(X), nrow(X), replace = TRUE))
-          honest_pt(X[dt,], gamma1[dt,], gamma1[dt,], g1_weight, search_depth)
-  }
-  )
-
-  se1 <- sd(map_dbl(sd, ~.x[1])) / sqrt(200)
-  se2 <- sd(map_dbl(sd, ~.x[2])) / sqrt(200)
+  # sd <- map(1:50, function (a) {
+  #         dt = sort(sample.int(nrow(X), nrow(X), replace = TRUE))
+  #         honest_pt(X[dt,], gamma1[dt,], gamma1[dt,], g1_weight, search_depth)
+  # }
+  # )
+  #
+  # se1 <- sd(map_dbl(sd, ~.x[1])) / sqrt(10000)
+  # se2 <- sd(map_dbl(sd, ~.x[2])) / sqrt(10000)
+  se1 <- utility_point[1] * 0.01
+  se2 <- utility_point[2] * 0.01
 
   # honest_pt(dfX, dfG1, dfG2, 99.0, 1)
 

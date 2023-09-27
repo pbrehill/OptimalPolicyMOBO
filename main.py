@@ -18,7 +18,7 @@ import subprocess
 
 subprocess.run(["Rscript", "get_dr_scores.R"])
 
-random.seed(100)
+random.seed(11)
 
 # Load our sample 2-objective problem
 from botorch.test_functions.multi_objective import BraninCurrin
@@ -36,7 +36,7 @@ import rpy2.robjects as ro
 #
 # evaluate_tree = ro.globalenv['evaluate_tree']
 
-NUM_TRIALS = 80
+NUM_TRIALS = 50
 
 from rpy2.robjects.packages import STAP
 #Read the file with the R code snippet
