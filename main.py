@@ -108,7 +108,7 @@ for i in tqdm(range(NUM_TRIALS)):
     start = time.time()
     parameters, trial_index = ax_client.get_next_trial()
     # Local evaluation here can be replaced with deployment to external system.
-    ax_client.complete_trial(trial_index=trial_index, raw_data=evaluate(parameters, r_dataframeX, r_dataframeG1, r_dataframeG2, 1))
+    ax_client.complete_trial(trial_index=trial_index, raw_data=evaluate(r_dataframeX, r_dataframeG1, r_dataframeG2, parameters, 1))
     end = time.time()
     time_loop.append(end - start)
 
@@ -193,3 +193,10 @@ total_time.append(time.time() - start_hybrid)
 with open('total_loops.txt', 'w') as f:
     for line in total_time:
         f.write(f"{line}\n")
+
+# Selected optimal points
+eval_weights = random.sample(y1_weights, 20)
+opt_evals = [evaluate(r_dataframeX, r_dataframeG1, r_dataframeG2, parameter, 3) for parameter in parameters]
+
+
+
