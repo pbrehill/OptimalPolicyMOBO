@@ -39,17 +39,3 @@ df_results.to_csv("vsd2.csv")
 ## Very limited vars
 df_results, time_taken = fit_frontier(X_vlim, G1, G2, num_trials=NUM_TRIALS, search_depth=1, depth=2)
 df_results.to_csv("vtd2.csv")
-
-# # Depth 3
-# ## All vars
-# df_results, time_taken = fit_frontier(X, G1, G2, num_trials=NUM_TRIALS, search_depth=1, depth=3)
-# df_results.to_csv("vbd3.csv")
-#
-# ## Limited vars
-# df_results, time_taken = fit_frontier(X_lim, G1, G2, num_trials=NUM_TRIALS, search_depth=1, depth=3)
-# df_results.to_csv("vsd3.csv")
-#
-# ## Very limited vars
-# df_results, time_taken = fit_frontier(X_vlim, G1, G2, num_trials=NUM_TRIALS, search_depth=1, depth=3)
-# df_results.to_csv("vtd3.csv")
-

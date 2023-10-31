@@ -16,7 +16,7 @@ from tqdm import tqdm
 import random
 import subprocess
 
-# subprocess.run(["Rscript", "/Users/patrickrehill/Documents/RProjects/SOCR8084-paper-1/kenya_dr.R"])
+subprocess.run(["Rscript", "kenya_dr.R"])
 
 random.seed(11)
 
@@ -115,67 +115,6 @@ def blunt_values(G1, G2, weight):
     return gamma1_value, gamma2_value
 
 
-
-
-
-total_time = []
-
-# # Greedy
-# time_loop = []
-# start_greedy = time.time()
-# ax_client = new_experiment()
-# for i in tqdm(range(NUM_TRIALS)):
-#     start = time.time()
-#     parameters, trial_index = ax_client.get_next_trial()
-#     # Local evaluation here can be replaced with deployment to external system.
-#     ax_client.complete_trial(trial_index=trial_index, raw_data=evaluate(parameters, r_dataframeX, r_dataframeG1, r_dataframeG2, 1))
-#
-#     end = time.time()
-#     time_loop.append(end - start)
-#
-# objectives = ax_client.experiment.optimization_config.objective.objectives
-# frontier = compute_posterior_pareto_frontier(
-#     experiment=ax_client.experiment,
-#     data=ax_client.experiment.fetch_data(),
-#     primary_objective=objectives[0].metric,
-#     secondary_objective=objectives[1].metric,
-#     absolute_metrics=["a", "b"],
-#     num_points=NUM_TRIALS,
-# )
-#
-# plt_stuff = plot_pareto_frontier(frontier, CI_level=0.95)
-# py.plot(plt_stuff.data, filename='simple-lineCFG.html')
-#
-# y1_weights = [x['y1_weight'] for x in frontier.param_dicts]
-# a_mean = frontier.means['a']
-# b_mean = frontier.means['b']
-#
-# # Get the oracle
-# oracles = [oracle_values(G1, G2, weight) for weight in y1_weights]
-# blunt = [blunt_values(G1, G2, weight) for weight in y1_weights]
-#
-#
-# pd.DataFrame(
-#     {
-#         'parameter': y1_weights,
-#         'a_mean': a_mean,
-#         'b_mean': b_mean,
-#         'a_sem': frontier.sems['a'],
-#         'b_sem': frontier.sems['b'],
-#         'a_oracle': np.array(oracles)[:,0],
-#         'b_oracle': np.array(oracles)[:,1],
-#         'a_blunt': np.array(blunt)[:,0],
-#         'b_blunt': np.array(blunt)[:,1]
-#     }
-# ).to_csv('pareto_resultsCFG.csv')
-#
-# with open('greedy_time.txt', 'w') as f:
-#     for line in time_loop:
-#         f.write(f"{line}\n")
-# total_time.append(time.time() - start_greedy)
-#
-
-# Hybrid
 def fit_frontier(X, G1, G2, search_depth, num_trials, depth, bs_replicates, time_iter = False):
     G1_r = pandas2ri.py2rpy(G1)
     X_r = pandas2ri.py2rpy(X)
