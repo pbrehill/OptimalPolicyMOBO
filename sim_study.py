@@ -1,5 +1,5 @@
 import pandas as pd
-from kenya import fit_frontier
+from fit_functions import fit_frontier
 from time import time
 import random
 

@@ -1,4 +1,4 @@
-from kenya import fit_frontier
+from fit_functions import fit_frontier
 import pandas as pd
 
 NUM_TRIALS = 200
