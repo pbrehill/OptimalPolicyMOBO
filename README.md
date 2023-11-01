@@ -12,6 +12,7 @@ The main functions to run MOPoL are found in `fit_functions.py`.
 `sim_study.py` covers the specification tests from the paper.
 `frontier_function.R` provides an R function to find the area under a 2D Pareto frontier.
 `plot_output.R` plots the output of to MOPoL optimisation.
+`specification_tests.Rmd` provides the plots for the specification tests.
 
 This repository does not represent a general-purpose package for MOPoL.
 The functions are designed to take two outcomes and a single hyperparameter weighting these outcomes,
