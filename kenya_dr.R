@@ -8,6 +8,10 @@ require("missMethods")
 
 set.seed(99)
 
+# This file creates the doubly robust scores for use in policy learning
+
+# Data available from https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/EQJPZT
+
 ken_main <- "ken_main.dta" %>% read_dta() %>%
   filter(coartemprice != 500)
 
