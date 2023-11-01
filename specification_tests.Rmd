@@ -1,0 +1,180 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+```
+
+
+# Fit boostrap plots
+```{r}
+bs_csvs <- list.files("/Users/patrickrehill/PycharmProjects/OptimalPolicyMOBO1/sim_tests/bootstraps", ".csv$")
+
+bs_dfs <- bs_csvs %>%
+  paste0("/Users/patrickrehill/PycharmProjects/OptimalPolicyMOBO1/sim_tests/bootstraps/", .) %>%
+  map(read_csv)
+
+names(bs_dfs) <- extract_numeric(bs_csvs)
+```
+
+```{r}
+
+```
+
+
+```{r}
+test <- bs_dfs %>%
+  bind_rows(.id = "replicates") %>%
+  group_by(replicates)
+```
+
+```{r}
+source('frontier_function.R')
+origin_y <- min(test$a_mean)
+origin_x <- min(test$b_mean)
+bs_effect <- map(test$replicates %>% unique, function (x) {
+  test_data <- test %>%
+    filter(replicates == x) %>%
+    ungroup %>%
+    select(b_mean, a_mean)
+  
+  map_dbl(1:nrow(test_data), ~find_frontier_area(test_data, .x, origin_x = origin_x, origin_y = origin_y))
+})
+
+test$bs_results <- bs_effect %>% unlist()
+
+# Including this because floating point error is messing with the figures, the lines go up and down by tiny amounts
+for (i in 1:length(test$bs_results)) {
+  category_max <- max(test$bs_results[1:i][test$replicates == test$replicates[i]], na.rm = T)
+  test$bs_results[i] <- ifelse(test$bs_results[i] >= category_max,
+         test$bs_results[i],
+         category_max
+         )
+  }
+```
+
+```{r}
+test %>%
+  arrange(as.numeric(replicates)) %>%
+  mutate(replicates = as.numeric(replicates)) %>%
+  filter(...1 > 0) %>%
+  ggplot(aes(x = ...1, y = bs_results)) +
+  geom_line() +
+  facet_wrap(vars(replicates)) +
+  labs(x = "Iterations", y = "Area under Pareto frontier")
+
+ggsave("/Users/patrickrehill/PycharmProjects/OptimalPolicyMOBO1/sim_tests/bootstraps.png")
+```
+
+
+```{r}
+acq_time <- read_csv("/Users/patrickrehill/PycharmProjects/OptimalPolicyMOBO1/sim_tests/diminishing_times.csv")
+
+names(acq_time) <- c("iteration", "time_taken", "it")
+
+acq_time <- acq_time %>%  
+  bind_cols(read_csv("/Users/patrickrehill/PycharmProjects/OptimalPolicyMOBO1/sim_tests/diminishing_returns.csv"))
+
+test_data <- acq_time %>%
+    select(b_mean, a_mean)
+
+acq_time$frontier_area <- map_dbl(1:nrow(test_data), ~find_frontier_area(test_data, .x, 
+                                                 origin_x = min(acq_time$b_mean), 
+                                                 origin_y = min(acq_time$a_mean)))
+
+# Including this because floating point error is messing with the figures, the lines go up and down by tiny amounts
+for (i in 1:length(acq_time$frontier_area)) {
+  category_max <- max(test$bs_results[1:i], na.rm = T)
+  acq_time$frontier_area[i] <- ifelse(acq_time$frontier_area[i] >= category_max,
+         acq_time$frontier_area[i],
+         category_max
+         )
+  }
+```
+
+```{r}
+# acq_time %>%
+#   ggplot(aes(x = iteration, y = time_taken)) +
+#     geom_point() +
+#     geom_line(aes(y= frontier_area * 30000), color = "darkblue") +
+#     labs(x = "Iteration", y = "Time taken per iteration of acquisition function (seconds)") +
+#     scale_y_continuous(
+#     "Time taken per iteration of acquisition function (seconds)", 
+#     sec.axis = sec_axis(~ . * 1.20, name = "Area within Pareto frontier")
+#   )
+
+acq_time_plot <- cowplot::plot_grid(
+acq_time %>%
+  ggplot(aes(x = iteration, y = time_taken)) +
+    geom_line(aes(y= frontier_area)) +
+    labs(x = "Iteration", y = "Area under Pareto frontier", color = "Model type"),
+acq_time %>%
+  ggplot(aes(x = iteration, y = time_taken)) +
+    geom_point() +
+    labs(x = "Iteration", y = "Time taken per iteration (seconds)", color = "Model type") +
+    scale_y_continuous(limits = c(0,30)),
+nrow=1
+)
+
+cowplot::save_plot("acq_time_plot.png", acq_time_plot, base_height = 2.7, base_asp = 2.1)
+```
+
+```{r}
+opt_v_greedy <- read_csv("/Users/patrickrehill/PycharmProjects/OptimalPolicyMOBO1/sim_tests/opt_times.csv")
+
+names(opt_v_greedy) <- c("iteration", "time_taken", "it")
+
+opt_v_greedy <- opt_v_greedy %>%
+  bind_cols(read_csv("/Users/patrickrehill/PycharmProjects/OptimalPolicyMOBO1/sim_tests/opt_returns.csv"))
+
+# Set area for optimal
+test_data <- opt_v_greedy %>%
+    select(b_mean, a_mean)
+
+opt_v_greedy$frontier_area <- map_dbl(1:nrow(test_data), ~find_frontier_area(test_data, .x, 
+                                                 origin_x = min(c(opt_v_greedy$b_mean), acq_time$b_mean), 
+                                                 origin_y = min(c(opt_v_greedy$a_mean), acq_time$a_mean)))
+
+# Reset greedy area
+
+test_data <- acq_time %>%
+    select(b_mean, a_mean)
+
+acq_time$frontier_area <- map_dbl(1:nrow(test_data), ~find_frontier_area(test_data, .x, 
+                                                 origin_x = min(c(opt_v_greedy$b_mean), acq_time$b_mean), 
+                                                 origin_y = min(c(opt_v_greedy$a_mean), acq_time$a_mean)))
+
+opt_v_greedy <- opt_v_greedy %>%
+  bind_rows(acq_time %>% head(100), .id = "model_type") %>%
+  mutate(model_type = car::recode(model_type, "1 = 'Optimal'; 2 = 'Greedy'"))
+
+
+```
+
+```{r}
+p1 <- opt_v_greedy %>%
+  ggplot(aes(x = iteration, y = time_taken, color = model_type)) +
+    geom_line(aes(y= frontier_area)) +
+    labs(x = "Iteration", y = "Area under Pareto frontier", color = "Model type")
+
+p2 <- opt_v_greedy %>%
+  ggplot(aes(x = iteration, y = time_taken, color = model_type)) +
+    geom_point() +
+    labs(x = "Iteration", y = "Time taken per iteration (seconds)", color = "Model type") +
+    theme(legend.position="none") +
+    scale_y_continuous(limits = c(0,8))
+
+og_plot <- cowplot::plot_grid(
+p1 + theme(legend.position="none") ,
+p2,
+get_legend(p1),
+          nrow=1,
+          rel_widths = c(2, 2, 0.6)
+)
+
+cowplot::save_plot("opt_vs_greedy.png", og_plot, base_height = 2.7, base_asp = 2.1)
+```
+
+

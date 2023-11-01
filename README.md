@@ -10,7 +10,8 @@ The main functions to run MOPoL are found in `fit_functions.py`.
 `kenya_dr.R` estimates doubly robust scores for use in the example (and can be adapted for use in other applications).
 `evaluate_depths.py` and `evaluate_optimals.py` make up most of the application in the paper.
 `sim_study.py` covers the specification tests from the paper.
-Finally, `frontier_function.R` provides an R function to find the area under a 2D Pareto frontier.
+`frontier_function.R` provides an R function to find the area under a 2D Pareto frontier.
+`plot_output.R` plots the output of to MOPoL optimisation.
 
 This repository does not represent a general-purpose package for MOPoL.
 The functions are designed to take two outcomes and a single hyperparameter weighting these outcomes,
