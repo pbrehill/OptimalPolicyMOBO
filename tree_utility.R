@@ -53,12 +53,6 @@ honest_pt <- function(X, gamma1, gamma2, g1_weight, search_depth, se, depth, bs)
   se2 <- 0
   }
 
-#   se1 <- utility_point[1] * 0.01
-#   se2 <- utility_point[2] * 0.01
-
-  # honest_pt(dfX, dfG1, dfG2, 99.0, 1)
-
-
   return(c(utility_point[1], utility_point[2], se1, se2))
 }
 
@@ -79,29 +73,6 @@ get_oracles <- function(gamma1, gamma2, g1_weight) {
   return(list(g1 = g1_total, g2 = g2_total))
 
 }
-
-
-# honest_pt <- function(X, gamma1, gamma2, g1_weight) {
-#   # Add in mix of gammas for fitting
-#   gamma = (gamma1 * g1_weight) + ((100.1 - g1_weight) * gamma2)
-#   ht = policy_tree(X, gamma, depth = 3)
-#
-#   png(filename="optimal.png")
-#   plot(ht)
-#   dev.off()
-#   return (0)
-# }
-
-# df <- read_csv('train_data1.csv')
-# dfX <- df[c('hhh_gender', 'hhh_age', 'hhh_literacy',
-#        'age', 'female', 'monthly_spending')]
-#
-# dfG1 <- df[c('any_drops2-1', 'any_drops3-1', 'any_drops4-1')]  * 0.1446128
-#
-# dfG2 <- df[c('maths2-1', 'maths3-1', 'maths4-1')] * 0.9120552
-
-
-# evaluate_tree(dfX, dfG1, dfG2, 99, search_depth = 2)
 
 
 

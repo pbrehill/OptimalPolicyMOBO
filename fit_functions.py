@@ -1,14 +1,14 @@
 from ax.service.ax_client import AxClient
 from ax.service.utils.instantiation import ObjectiveProperties
-import time
+from time import time
 
 import torch
 import pandas as pd
 
 # Plotting imports and initialization
 from ax.utils.notebook.plotting import render, init_notebook_plotting
-from ax.plot.pareto_utils import compute_posterior_pareto_frontier
-from ax.plot.pareto_frontier import plot_pareto_frontier
+from ax.plot.pareto_utils import compute_posterior_pareto_frontier, get_observed_pareto_frontiers
+from ax.plot.pareto_frontier import plot_pareto_frontier, scatter_plot_with_hypervolume_trace_plotly
 # init_notebook_plotting()
 import plotly.offline as py
 from tqdm import tqdm
@@ -30,6 +30,7 @@ import warnings
 warnings.filterwarnings("ignore", category=RRuntimeWarning)
 pandas2ri.activate()
 import numpy as np
+import pickle
 
 NUM_TRIALS = 400
 
@@ -140,7 +141,7 @@ def blunt_values(G1, G2, weight):
     return gamma1_value, gamma2_value
 
 
-def fit_frontier(X, G1, G2, search_depth, num_trials, depth, bs_replicates, time_iter = False):
+def fit_frontier(X, G1, G2, search_depth, num_trials, depth, bs_replicates, posterior = True):
     """
     Fits a Pareto frontier of models using multi-objective Bayesian optimisation based on policy trees of a given type.
     :param X: Covariates to for fitting the policy tree.
@@ -158,25 +159,29 @@ def fit_frontier(X, G1, G2, search_depth, num_trials, depth, bs_replicates, time
     X_r = pandas2ri.py2rpy(X)
     G2_r = pandas2ri.py2rpy(G2)
 
-    start_hybrid = time.time()
+    start_hybrid = time()
     time_loop = []
     ax_client = new_experiment()
+    evaluations = []
     for i in tqdm(range(num_trials)):
-        start = time.time()
+        start = time()
         parameters, trial_index = ax_client.get_next_trial()
-        # Local evaluation here can be replaced with deployment to external system.
-        ax_client.complete_trial(trial_index=trial_index, raw_data=evaluate(parameters, X_r, G1_r, G2_r, search_depth=search_depth, depth=depth, bs_replicates = bs_replicates))
-        end = time.time()
+        evaluation = evaluate(parameters, X_r, G1_r, G2_r, search_depth=search_depth, depth=depth, bs_replicates=bs_replicates)
+        print(evaluation)
+        evaluations.append(evaluation)
+        ax_client.complete_trial(trial_index=trial_index, raw_data=evaluation)
+        end = time()
         time_loop.append(end - start)
 
     objectives = ax_client.experiment.optimization_config.objective.objectives
+
     frontier = compute_posterior_pareto_frontier(
         experiment=ax_client.experiment,
         data=ax_client.experiment.fetch_data(),
         primary_objective=objectives[0].metric,
         secondary_objective=objectives[1].metric,
         absolute_metrics=["a", "b"],
-        num_points=num_trials,
+        num_points=100,
     )
 
     plt_stuff = plot_pareto_frontier(frontier, CI_level=0.95)
@@ -204,7 +209,11 @@ def fit_frontier(X, G1, G2, search_depth, num_trials, depth, bs_replicates, time
         }
     )
 
-    if time_iter:
-        return df_out, time.time() - start_hybrid, time_loop
-    else:
-        return df_out, time.time() - start_hybrid
+    hv_plot = scatter_plot_with_hypervolume_trace_plotly(ax_client.experiment)
+    hvs = pd.DataFrame(hv_plot.data[0]["y"], columns=['HV'])
+
+    with open('evaluations.pkl', 'wb') as file:
+        pickle.dump(evaluations, file)
+
+
+    return df_out, time() - start_hybrid, time_loop, hvs

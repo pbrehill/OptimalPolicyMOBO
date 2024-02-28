@@ -1,10 +1,16 @@
-require("tidyverse")
-require("magrittr")
+library(dplyr)
 library(haven)
-library(testit)
 library(grf)
+library(readr)
 library(policytree)
-require("missMethods")
+
+
+
+impute_median <- function(df) {
+  df %>%
+    mutate(across(where(is.numeric), ~ifelse(is.na(.), median(., na.rm = TRUE), .)))
+}
+
 
 set.seed(99)
 
@@ -12,7 +18,7 @@ set.seed(99)
 
 # Data available from https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/EQJPZT
 
-ken_main <- "ken_main.dta" %>% read_dta() %>%
+ken_main <- "ACT_AllMain_FINAL_pub.dta" %>% read_dta() %>%
   filter(coartemprice != 500)
 
 
@@ -42,13 +48,13 @@ gamma2 <- double_robust_scores(ken_forest, 2)  %>% as.data.frame.matrix()
 names(gamma2) <- paste0(names(gamma2), ".no_treated")
 
 gamma <- bind_cols(gamma1, gamma2)
-write_csv(gamma, "/Users/patrickrehill/PycharmProjects/OptimalPolicyMOBO1/kenya_dr.csv")
+write_csv(gamma, "kenya_dr.csv")
 write_csv(X[row_selector,] %>% 
-            missMethods::impute_median(), "/Users/patrickrehill/PycharmProjects/OptimalPolicyMOBO1/kenya_covars.csv")
+            impute_median(), "kenya_covars.csv")
 write_csv(X[row_selector,] %>% 
-            missMethods::impute_median() %>%
+            impute_median() %>%
             select(B_head_age_imputed, dist_clinic, head_acres, head_mar, head_dep, subfarm, B_hh_size, B_adultteen, LOG_patient_age1), 
-          "/Users/patrickrehill/PycharmProjects/OptimalPolicyMOBO1/kenya_limited_covars.csv")
+          "kenya_limited_covars.csv")
 
 
 
